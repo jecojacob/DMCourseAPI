@@ -28,6 +28,12 @@ namespace CourseLibrary.API.Logging
                     continue;
                 }
 
+                if (string.Equals(pattern.Name, "email", StringComparison.OrdinalIgnoreCase))
+                {
+                    masked = pattern.Pattern.Replace(masked, match => MaskEmail(match.Value));
+                    continue;
+                }
+
                 masked = pattern.Pattern.Replace(masked, match => MaskMatchedValue(match.Value));
             }
 
@@ -52,6 +58,31 @@ namespace CourseLibrary.API.Logging
             }
 
             return string.Concat(value[0], _options.MiddleMask, value[value.Length - 1]);
+        }
+
+        private string MaskEmail(string email)
+        {
+            if (string.IsNullOrEmpty(email))
+            {
+                return email;
+            }
+
+            var atIndex = email.IndexOf('@');
+            if (atIndex <= 0 || atIndex == email.Length - 1)
+            {
+                return MaskMatchedValue(email);
+            }
+
+            var firstCharacter = email[0];
+            var charactersToMask = atIndex - 1;
+            if (charactersToMask <= 0)
+            {
+                return email;
+            }
+
+            var hiddenLocalPart = new string('*', charactersToMask);
+            var domainPart = email.Substring(atIndex);
+            return string.Concat(firstCharacter, hiddenLocalPart, domainPart);
         }
     }
 }
