@@ -22,10 +22,36 @@ namespace CourseLibrary.API.Logging
 
             foreach (var pattern in _options.MaskingPatterns)
             {
-                masked = pattern.Pattern.Replace(masked, pattern.Replacement);
+                if (!string.IsNullOrWhiteSpace(pattern.Replacement))
+                {
+                    masked = pattern.Pattern.Replace(masked, pattern.Replacement);
+                    continue;
+                }
+
+                masked = pattern.Pattern.Replace(masked, match => MaskMatchedValue(match.Value));
             }
 
             return masked;
+        }
+
+        private string MaskMatchedValue(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return value;
+            }
+
+            if (!_options.ShowFirstAndLastCharacter)
+            {
+                return _options.RedactionText;
+            }
+
+            if (value.Length == 1)
+            {
+                return _options.MiddleMask;
+            }
+
+            return string.Concat(value[0], _options.MiddleMask, value[value.Length - 1]);
         }
     }
 }
